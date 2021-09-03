@@ -34,7 +34,44 @@
 				console.log("web3: ", web3);
 			}
 			
+			$('#sendMycoin').on('click', async function () {
+			
+				let fromaddress = $("#fromaddress").val();
+				let toaddress = $("#toaddress").val();
+				let amount = $("#sendcoin").val();
+				let myPrivateKey = $("#mypasswd").val();
+				
+				const privateKey = Buffer.from(myPrivateKey, 'hex');
+				if (DEBUG) console.log("privateKey: ", privateKey);
+
+				web3.eth.getTransactionCount(fromaddress, (err, txCount) => {
+				// Build the transaction
+				const txObject = {
+				nonce: web3.utils.toHex(txCount),
+				to: toaddress,
+				value: web3.utils.toHex(web3.utils.toWei(amount, 'ether')),
+				gasLimit: web3.utils.toHex(21000),
+				gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei'))
+				}
+
+				// Sign the transaction
+				const tx = new ethereumjs.Tx(txObject);
+				tx.sign(privateKey);
+
+				const serializedTx = tx.serialize()
+				const raw = '0x' + serializedTx.toString('hex')
+				
+				// Broadcast the transaction
+				web3.eth.sendSignedTransaction(raw, (err, txHash) => {
+					console.log('txHash:', txHash)
+				// Now go check etherscan to see the transaction!
+				})
+				})  // end of txbuilder
+				
+			})
+			
 			$('#getBalance').on('click', async function () {
+			
 				let fromaddress = $("#fromaddress").val();
 				let getbalance = await web3.eth.getBalance(fromaddress);
 				let balance = web3.utils.fromWei(getbalance, "ether")
@@ -76,8 +113,12 @@
 		<div id="tablePlace"></div>
 		<button id="newAccount">계정 생성</button>
 		<button id="getBalance">잔액 조회</button>
+		<button id="sendMycoin">코인 전송</button>
 		
-		<h5>송신처 <input id="fromaddress" size="45" placeholder=""></input>
+		<h5>송신처 <input id="fromaddress" size="45" value="0xCc2308e3519B3986Ce9990f2900A1d273d27e6fB" placeholder="송신처"></input>
+		<h5>수신처 <input id="toaddress" size="45" value="0x5CD671e965b21d277A36d60b381Caf4C8D7b4383" placeholder="수신처"></input>
+		<h5>코인  <input id="sendcoin" size="45" placeholder="코인"></input>
+		<h5>비밀번호 <input id="mypasswd" type="password" size="45" placeholder="password"></input>
 	</div>
 	<br>
 	<br>
